@@ -4,13 +4,15 @@ Automatically builds a Windows MSI installer when [mifi/lossless-cut](https://gi
 
 ## How it works
 
-1. The [GitHub Actions workflow](.github/workflows/build-msi.yml) runs daily (and on manual trigger).
-2. It reads the latest upstream release from `mifi/lossless-cut`.
-3. If this repository does not already have a GitHub release with the same tag (e.g. `v3.69.0`), it:
-   - Downloads `LosslessCut-win-x64.7z`
+1. The [GitHub Actions workflow](.github/workflows/build-msi.yml) runs monthly (and on push to `main`/`master` or manual trigger).
+2. It reads the **latest** upstream release from `mifi/lossless-cut`.
+3. If this repository does not already have a GitHub release with the same tag (e.g. `v3.70.0`), it:
+   - Downloads `LosslessCut-win-x64.7z` from that release
    - Extracts the portable app
-   - Packages it into an MSI with [WiX Toolset 5](https://wixtoolset.org/)
+   - Packages it into an MSI with [WiX Toolset 7](https://wixtoolset.org/)
    - Publishes a GitHub release with `LosslessCut-<version>-win-x64.msi`
+
+Release notes link to the upstream release page (`releases/tag/<version>`), not the direct download URL.
 
 ## Manual run
 
@@ -19,8 +21,8 @@ In GitHub: **Actions → Build LosslessCut MSI → Run workflow**.
 ## Local build
 
 ```powershell
-# Download upstream 7z, then:
-./scripts/build-msi.ps1 -ArchivePath .\LosslessCut-win-x64.7z -Version 3.69.0
+# Download the upstream 7z for the version you want, then:
+./scripts/build-msi.ps1 -ArchivePath .\LosslessCut-win-x64.7z -Version 3.70.0
 ```
 
 Requires [.NET SDK](https://dotnet.microsoft.com/download) and 7-Zip (included on GitHub-hosted Windows runners).
@@ -28,7 +30,7 @@ Requires [.NET SDK](https://dotnet.microsoft.com/download) and 7-Zip (included o
 ## Install
 
 ```powershell
-msiexec /i LosslessCut-3.69.0-win-x64.msi
+msiexec /i LosslessCut-<version>-win-x64.msi
 ```
 
 Or double-click the MSI from the [Releases](https://github.com/YOUR_USER/LostlessCut/releases) page.

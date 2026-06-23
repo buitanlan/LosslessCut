@@ -9,24 +9,27 @@ $assetName = $env:ASSET_NAME
 if (-not $assetName) { $assetName = 'LosslessCut-win-x64.7z' }
 
 $headers = @{
-    'User-Agent'      = 'LostlessCut-MSI-CI'
-    'Accept'          = 'application/vnd.github+json'
+    'User-Agent'           = 'LostlessCut-MSI-CI'
+    'Accept'               = 'application/vnd.github+json'
     'X-GitHub-Api-Version' = '2022-11-28'
 }
 
-Write-Host "Fetching latest release from $upstreamRepo..."
+Write-Host "Fetching latest upstream release from $upstreamRepo..."
 $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$upstreamRepo/releases/latest" -Headers $headers
 
 $tag = $release.tag_name
 $version = $tag -replace '^v', ''
+$releaseUrl = "https://github.com/$upstreamRepo/releases/tag/$tag"
 $downloadUrl = "https://github.com/$upstreamRepo/releases/download/$tag/$assetName"
 
 $asset = $release.assets | Where-Object { $_.name -eq $assetName } | Select-Object -First 1
 if (-not $asset) {
-    throw "Asset '$assetName' not found in upstream release $tag"
+    throw "Asset '$assetName' not found in upstream release $tag ($releaseUrl)"
 }
 
-Write-Host "Upstream latest: $tag ($version)"
+Write-Host "Upstream release: $tag ($version)"
+Write-Host "Release page: $releaseUrl"
+Write-Host "Download URL: $downloadUrl"
 
 $shouldBuild = $true
 $reason = ''
@@ -62,6 +65,7 @@ if ($env:GITHUB_OUTPUT) {
     "tag=$tag" >> $env:GITHUB_OUTPUT
     "version=$version" >> $env:GITHUB_OUTPUT
     "download_url=$downloadUrl" >> $env:GITHUB_OUTPUT
+    "release_url=$releaseUrl" >> $env:GITHUB_OUTPUT
     "should_build=$($shouldBuild.ToString().ToLower())" >> $env:GITHUB_OUTPUT
     "reason=$reason" >> $env:GITHUB_OUTPUT
 }

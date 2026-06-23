@@ -14,7 +14,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-if (-not $WixVersion) { $WixVersion = '5.0.2' }
+if (-not $WixVersion) { $WixVersion = '7.0.0' }
 
 function Resolve-SevenZip {
     $candidates = @(
