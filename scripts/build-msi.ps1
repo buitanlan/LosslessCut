@@ -108,11 +108,19 @@ try {
     $msiPath = Join-Path (Resolve-Path $OutputDir) "LosslessCut-$Version-win-x64.msi"
     $productWxs = Join-Path $repoRoot 'installer\Product.wxs'
 
-    wix build $productWxs `
-        -bindpath "AppDir=$appDir" `
-        -d "Version=$msiVersion" `
-        -arch x64 `
-        -o $msiPath
+    $wixArgs = @(
+        'build', $productWxs
+        '-bindpath', "AppDir=$appDir"
+        '-d', "Version=$msiVersion"
+        '-arch', 'x64'
+        '-o', $msiPath
+    )
+    if ($WixVersion -match '^7\.') {
+        # WiX 7+ requires OSMF EULA acceptance in CI: https://docs.firegiant.com/wix/osmf/
+        $wixArgs += @('-acceptEula', 'wix7')
+    }
+
+    & wix @wixArgs
 
     if ($LASTEXITCODE -ne 0) {
         throw "WiX build failed with exit code $LASTEXITCODE"
