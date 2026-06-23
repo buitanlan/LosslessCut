@@ -1,0 +1,6 @@
+dist/
+build/
+.vs/
+*.msi
+*.7z
+*.wxs.bak

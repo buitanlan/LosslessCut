@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="LosslessCut"
+    Manufacturer="mifi"
+    Version="$(var.Version)"
+    UpgradeCode="8F3C2A1B-4D5E-6F70-8910-ABCDEF123456"
+    Scope="perMachine"
+    Compressed="yes">
+
+    <SummaryInformation
+      Description="LosslessCut — lossless video and audio editor (MSI repack)"
+      Keywords="LosslessCut,video,audio,editor" />
+
+    <MajorUpgrade
+      AllowSameVersionUpgrades="yes"
+      DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Feature Id="Main" Title="LosslessCut" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcutComponent" />
+    </Feature>
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="LosslessCut" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="LosslessCut" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="!(bindpath.AppDir)\**" />
+    </ComponentGroup>
+
+    <Component
+      Id="StartMenuShortcutComponent"
+      Directory="ApplicationProgramsFolder"
+      Guid="C7E8F9A0-B1C2-4D3E-5F67-890ABCDEF012">
+      <Shortcut
+        Id="LosslessCutStartMenuShortcut"
+        Name="LosslessCut"
+        Description="Lossless video and audio editor"
+        Target="[INSTALLFOLDER]LosslessCut.exe"
+        WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder
+        Id="RemoveApplicationProgramsFolder"
+        Directory="ApplicationProgramsFolder"
+        On="uninstall" />
+      <RegistryValue
+        Root="HKCU"
+        Key="Software\mifi\LosslessCut"
+        Name="Installed"
+        Type="integer"
+        Value="1"
+        KeyPath="yes" />
+    </Component>
+  </Package>
+</Wix>
