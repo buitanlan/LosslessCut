@@ -1,6 +1,10 @@
 name: Build LosslessCut MSI
 
 on:
+  push:
+    branches:
+      - main
+      - master
   schedule:
     # Check for new upstream releases daily at 06:00 UTC
     - cron: '0 6 * * *'
