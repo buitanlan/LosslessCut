@@ -1,81 +1,84 @@
-name: Build LosslessCut MSI
-
-on:
-  push:
-    branches:
-      - main
-      - master
-  schedule:
-    # Check for new upstream releases on the 1st of each month at 06:00 UTC
-    - cron: '0 6 1 * *'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-env:
-  UPSTREAM_REPO: mifi/lossless-cut
-  ASSET_NAME: LosslessCut-win-x64.7z
-  WIX_VERSION: '7.0.0'
-
-jobs:
-  build-msi:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Check upstream version
-        id: upstream
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UPSTREAM_REPO: ${{ env.UPSTREAM_REPO }}
-          ASSET_NAME: ${{ env.ASSET_NAME }}
-        run: ./scripts/check-version.ps1
-
-      - name: Download upstream archive
-        if: steps.upstream.outputs.should_build == 'true'
-        shell: pwsh
-        run: |
-          $url = "${{ steps.upstream.outputs.download_url }}"
-          $dest = "${{ runner.temp }}\LosslessCut-win-x64.7z"
-          Write-Host "Downloading ${{ steps.upstream.outputs.tag }} from $url"
-          Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-
-      - name: Build MSI
-        if: steps.upstream.outputs.should_build == 'true'
-        shell: pwsh
-        run: |
-          ./scripts/build-msi.ps1 `
-            -ArchivePath "${{ runner.temp }}\LosslessCut-win-x64.7z" `
-            -Version "${{ steps.upstream.outputs.version }}" `
-            -OutputDir dist
-
-      - name: Create GitHub release
-        if: steps.upstream.outputs.should_build == 'true'
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.upstream.outputs.tag }}
-          name: LosslessCut ${{ steps.upstream.outputs.version }} (Windows MSI)
-          body: |
-            Windows x64 MSI installer repackaged from [mifi/lossless-cut ${{ steps.upstream.outputs.tag }}](${{ steps.upstream.outputs.release_url }}).
-
-            **Upstream release:** [${{ steps.upstream.outputs.tag }}](${{ steps.upstream.outputs.release_url }})
-
-            **Upstream asset:** [${{ env.ASSET_NAME }}](${{ steps.upstream.outputs.release_url }})
-
-            Install with `msiexec /i LosslessCut-${{ steps.upstream.outputs.version }}-win-x64.msi` or double-click the MSI.
-          files: dist/LosslessCut-${{ steps.upstream.outputs.version }}-win-x64.msi
-          draft: false
-          prerelease: false
-          make_latest: true
-
-      - name: No new version
-        if: steps.upstream.outputs.should_build != 'true'
-        shell: pwsh
-        run: |
-          Write-Host "No build needed. Latest upstream: ${{ steps.upstream.outputs.tag }}"
-          if ("${{ steps.upstream.outputs.reason }}") {
-            Write-Host "Reason: ${{ steps.upstream.outputs.reason }}"
-          }
+name: Build LosslessCut MSI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    # Check for new upstream releases on the 1st of each month at 06:00 UTC
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  UPSTREAM_REPO: mifi/lossless-cut
+  ASSET_NAME: LosslessCut-win-x64.7z
+  WIX_VERSION: '7.0.0'
+
+jobs:
+  build-msi:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Check upstream version
+        id: upstream
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM_REPO: ${{ env.UPSTREAM_REPO }}
+          ASSET_NAME: ${{ env.ASSET_NAME }}
+        run: ./scripts/check-version.ps1
+
+      - name: Download upstream archive
+        if: steps.upstream.outputs.should_build == 'true'
+        shell: pwsh
+        run: |
+          $url = "${{ steps.upstream.outputs.download_url }}"
+          $dest = "${{ runner.temp }}\LosslessCut-win-x64.7z"
+          Write-Host "Downloading ${{ steps.upstream.outputs.tag }} from $url"
+          Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+
+      - name: Build MSI
+        if: steps.upstream.outputs.should_build == 'true'
+        shell: pwsh
+        env:
+          WIX_VERSION: ${{ env.WIX_VERSION }}
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'LosslessCut-win-x64.7z'
+          $version = '${{ steps.upstream.outputs.version }}'
+          if (-not $version) { throw 'Upstream version output is empty; check-version step may have failed.' }
+          if (-not (Test-Path $archive)) { throw "Archive not found: $archive" }
+          & ./scripts/build-msi.ps1 -ArchivePath $archive -Version $version -OutputDir dist
+
+      - name: Create GitHub release
+        if: steps.upstream.outputs.should_build == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.upstream.outputs.tag }}
+          name: LosslessCut ${{ steps.upstream.outputs.version }} (Windows MSI)
+          body: |
+            Windows x64 MSI installer repackaged from [mifi/lossless-cut ${{ steps.upstream.outputs.tag }}](${{ steps.upstream.outputs.release_url }}).
+
+            **Upstream release:** [${{ steps.upstream.outputs.tag }}](${{ steps.upstream.outputs.release_url }})
+
+            **Upstream asset:** [${{ env.ASSET_NAME }}](${{ steps.upstream.outputs.release_url }})
+
+            Install with `msiexec /i LosslessCut-${{ steps.upstream.outputs.version }}-win-x64.msi` or double-click the MSI.
+          files: dist/LosslessCut-${{ steps.upstream.outputs.version }}-win-x64.msi
+          draft: false
+          prerelease: false
+          make_latest: true
+
+      - name: No new version
+        if: steps.upstream.outputs.should_build != 'true'
+        shell: pwsh
+        run: |
+          Write-Host "No build needed. Latest upstream: ${{ steps.upstream.outputs.tag }}"
+          if ("${{ steps.upstream.outputs.reason }}") {
+            Write-Host "Reason: ${{ steps.upstream.outputs.reason }}"
+          }
